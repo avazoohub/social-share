@@ -78,6 +78,8 @@ const TWITTER_CLIENT_SECRET = process.env.TWITTER_CLIENT_SECRET;
 const app = express();
 const PORT = 3000;
 
+app.set('trust proxy', 1);
+
 app.use(cors({
     origin: ORIGIN,
     credentials: true
