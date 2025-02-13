@@ -4,6 +4,7 @@ import cors from 'cors';
 import fetch from 'node-fetch';
 import { TwitterApi } from 'twitter-api-v2';
 import dotenv from 'dotenv';
+import path from 'path';
 
 dotenv.config();
 
@@ -116,7 +117,8 @@ app.get('/auth/twitter', async (req: Request, res: Response) => {
         session.save((err: Error | null) => {
             if (err) {
                 console.error('Session save error:', err);
-                res.redirect('/callback.html');
+                // res.redirect('/callback.html');
+                res.status(500).json({ error: 'Session save error' });
                 return;
             }
             console.log('Session after /auth/twitter:', session);
@@ -124,12 +126,13 @@ app.get('/auth/twitter', async (req: Request, res: Response) => {
         });
     } catch (error) {
         console.error('Auth error:', error);
-        res.redirect('/callback.html');
+        // res.redirect('/callback.html');
+        res.status(500).json({ error: 'Auth error' });
     }
 });
 
 // Handle Twitter callback
-app.get('/callback', async (req: Request, res: Response) => {
+app.get('/callback', async (req: Request, res: Response): Promise<void | any> => {
     console.log('Incoming session in /callback:', req.session);
 
     try {
@@ -145,11 +148,13 @@ app.get('/callback', async (req: Request, res: Response) => {
         console.log('code', code);
 
         if (!codeVerifier || !state || !sessionState || !code) {
-            return res.redirect('/callback.html');
+            return res.redirect(`${ORIGIN}/callbackresponse`);
+            // return res.status(400).json({ error: 'Missing required parameters' });
         }
 
         if (state !== sessionState) {
-            return res.redirect('/callback.html');
+            return res.redirect(`${ORIGIN}/callbackresponse`);
+            // return res.status(400).json({ error: 'Invalid state' });
         }
 
         const {
@@ -167,10 +172,13 @@ app.get('/callback', async (req: Request, res: Response) => {
 
         const user = await loggedClient.v2.me();
 
-        res.redirect(`/callback.html?token=${accessToken}`);
+        res.redirect(`${ORIGIN}/callbackresponse?token=${accessToken}`);
+        // res.status(200).json({ success: true, user, token: accessToken });
+
     } catch (error) {
         console.error('Callback error:', error);
-        res.redirect('/callback.html');
+        res.redirect(`${ORIGIN}/callbackresponse`);
+        // res.status(500).json({ error: 'Callback error' });
     }
 });
 
@@ -196,7 +204,7 @@ app.get('/auth/linkedin', (req: Request, res: Response) => {
 });
 
 // Handle LinkedIn callback
-app.get('/callback/linkedin', async (req: Request, res: Response) => {
+app.get('/callback/linkedin', async (req: Request, res: Response): Promise<void | any> => {
     const { code, state } = req.query as { code: string; state: string };
     const session = req.session as TwitterSession;
     const sessionState = session.linkedin_state;
@@ -218,16 +226,19 @@ app.get('/callback/linkedin', async (req: Request, res: Response) => {
 
         if (tokenData.error) {
             console.log('LinkedIn token error:', tokenData);
-            return res.redirect('/callback.html');
+            // return res.redirect('/callback.html');
+            return res.status(400).json({ error: 'LinkedIn token error' });
         }
-
         const accessToken = tokenData.access_token;
         session.linkedin_accessToken = accessToken;
 
-        res.redirect(`/callback.html?token=${accessToken}`);
+        res.redirect(`${ORIGIN}/callbackresponse?token=${accessToken}`);
+        // res.status(200).json({ success: true, token: accessToken });
+
     } catch (error) {
         console.error('LinkedIn callback error:', error);
-        res.redirect('/callback.html');
+        res.redirect(`${ORIGIN}/callbackresponse`);
+        // res.status(500).json({ error: 'LinkedIn callback error' });
     }
 });
 
@@ -251,6 +262,9 @@ app.post('/api/tweet', async (req: Request, res: Response): Promise<void | any> 
 
 app.post('/api/linkedin', async (req: Request, res: Response): Promise<void | any> => {
     try {
+
+        console.log('session', req.session);
+
         const session = req.session as TwitterSession;
         if (!session.linkedin_accessToken) {
             return res.status(401).json({ error: 'Not authenticated for LinkedIn' });
@@ -258,15 +272,16 @@ app.post('/api/linkedin', async (req: Request, res: Response): Promise<void | an
 
         const accessToken = session.linkedin_accessToken;
         const profileResponse = await fetch(
-            "https://api.linkedin.com/v2/me",
+            "https://api.linkedin.com/v2/userinfo",
             {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                 },
             }
         );
-
-        const profileData = await profileResponse.json() as LinkedInProfileData;
+        const profileData = await profileResponse.json();
+        console.log('profileResponse', profileData);
+        
         const personSub = profileData.sub;
         const authorURN = `urn:li:person:${personSub}`;
 
@@ -328,6 +343,10 @@ app.post('/api/linkedin', async (req: Request, res: Response): Promise<void | an
 
 // Serve static files
 app.use(express.static('public'));
+
+app.get('/callbackresponse', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'callbackresponse.html'));
+});
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
