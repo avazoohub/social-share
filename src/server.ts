@@ -232,38 +232,33 @@ app.get('/callback/linkedin', async (req: Request, res: Response) => {
 });
 
 // Protected routes
-app.post('/api/tweet', async (req: Request, res: Response) => {
+app.post('/api/tweet', async (req: Request, res: Response): Promise<void | any> => {
     try {
         const session = req.session as TwitterSession;
         if (!session.accessToken) {
-            // return res.status(401).json({ error: 'Not authenticated' });
-            res.redirect('/callback.html');
+            return res.status(401).json({ error: 'Not authenticated' });
         }
 
         const client = new TwitterApi(session.accessToken as string);
         const tweet = await client.v2.tweet(req.body.title);
 
-        // res.json(tweet);
-        res.redirect('/callback.html');
-
+        res.json(tweet);
     } catch (error) {
         console.error('Tweet error:', error);
-        res.redirect('/callback.html');
+        res.status(500).json({ error: 'Tweet request failed' });
     }
 });
 
-app.post('/api/linkedin', async (req: Request, res: Response) => {
+app.post('/api/linkedin', async (req: Request, res: Response): Promise<void | any> => {
     try {
         const session = req.session as TwitterSession;
         if (!session.linkedin_accessToken) {
-            // return res.status(401).json({ error: 'Not authenticated for LinkedIn' });
-            console.log('Not authenticated for LinkedIn');
-            res.redirect('/callback.html');
+            return res.status(401).json({ error: 'Not authenticated for LinkedIn' });
         }
 
         const accessToken = session.linkedin_accessToken;
         const profileResponse = await fetch(
-            "https://api.linkedin.com/v2/userinfo",
+            "https://api.linkedin.com/v2/me",
             {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
@@ -321,16 +316,13 @@ app.post('/api/linkedin', async (req: Request, res: Response) => {
 
         if (!postResponse.ok) {
             console.error('LinkedIn post error:', result);
-            // return res.status(postResponse.status).json({ error: result });
-            res.redirect('/callback.html');
+            return res.status(postResponse.status).json({ error: result });
         }
 
         res.json({ success: true, result });
-        // res.redirect('/callback.html');
-
     } catch (error) {
         console.error('LinkedIn posting error:', error);
-        res.redirect('/callback.html');
+        res.status(500).json({ error: 'LinkedIn posting error' });
     }
 });
 
