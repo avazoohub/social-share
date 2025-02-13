@@ -95,8 +95,10 @@ app.use(session({
 
 // Initialize Twitter client
 const twitterClient = new TwitterApi({
-    clientId: TWITTER_CLIENT_ID as string,
-    clientSecret: TWITTER_CLIENT_SECRET
+    // clientId: TWITTER_CLIENT_ID as string,
+    // clientSecret: TWITTER_CLIENT_SECRET
+    clientId: 'NEZITzVvQ0tpdzhWcWduTWV4Nlg6MTpjaQ',
+    clientSecret: 'xCFFf0YR8D0joejO0U_jHTrqkwUvm6_J-kIbxJ47tg2yZTrsKw'
 });
 
 // Generate Twitter OAuth2 link
