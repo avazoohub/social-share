@@ -1,6 +1,4 @@
-# My Node.js API Application
-
-This repository contains a Node.js API application built with TypeScript. The app implements OAuth authentication for Twitter and LinkedIn, and provides endpoints for posting tweets and LinkedIn articles.
+# Social Share for Avazoo App
 
 ## Endpoints
 
