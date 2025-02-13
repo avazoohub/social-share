@@ -12,7 +12,9 @@ Below is a list of available endpoints and how to use them:
 Generate a Twitter OAuth2 authentication URL.
 
 **Response (JSON):**
-
+{
+"url": "https://api.twitter.com/..."
+}
 
 **Description:**  
 This endpoint creates a Twitter OAuth2 URL and saves the `codeVerifier` and `state` in the session. Redirect your user to the URL to begin the Twitter login process.
@@ -39,6 +41,9 @@ This endpoint exchanges the OAuth2 code for an access token. On success, it stor
 Generate a LinkedIn OAuth2 authentication URL.
 
 **Response (JSON):**
+{
+"url": "https://www.linkedin.com/oauth/v2/authorization?...&state=exampleState"
+}
 
 
 **Description:**  
@@ -66,7 +71,9 @@ This endpoint exchanges the provided authorization code for an access token with
 Post a tweet on behalf of the authenticated Twitter user.
 
 **Request Body (JSON):**
-
+{
+"title": "Your tweet content here"
+}
 
 **Response:**  
 Returns the Twitter API response object for the posted tweet.
@@ -82,7 +89,11 @@ Ensure the user has authenticated via `/auth/twitter`. This endpoint uses the Tw
 Create a LinkedIn UGC post.
 
 **Request Body (JSON):**
-
+{
+"title": "Title of the post",
+"description": "Description of the article",
+"url": "https://example.com/article"
+}
 
 **Response:**  
 Returns a JSON object indicating the success and details of the LinkedIn post.
